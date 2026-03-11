@@ -39,10 +39,27 @@ auth.onAuthStateChanged(user => {
    ===================================================== */
 function authLogin() {
   const provider = new firebase.auth.GoogleAuthProvider();
+  // Try popup first; if COOP/cross-origin blocks it, fall back to redirect
   auth.signInWithPopup(provider).catch(err => {
-    showToast('⚠ Login failed: ' + err.message, true);
+    if (err.code === 'auth/popup-blocked' ||
+        err.code === 'auth/popup-closed-by-user' ||
+        err.code === 'auth/cancelled-popup-request') {
+      // Silent fallback — user closed popup intentionally
+      return;
+    }
+    // For COOP / cross-origin issues, fall back to redirect flow
+    auth.signInWithRedirect(provider).catch(redirectErr => {
+      showToast('⚠ Login failed: ' + redirectErr.message, true);
+    });
   });
 }
+
+// Handle redirect result on page load (needed for signInWithRedirect)
+auth.getRedirectResult().catch(err => {
+  if (err && err.code !== 'auth/no-current-user') {
+    showToast('⚠ Login error: ' + err.message, true);
+  }
+});
 
 function authLogout() {
   const key = cacheKey(); // capture before currentUser is nulled
@@ -235,11 +252,10 @@ function renderLibrary() {
 }
 
 async function syncLibraryFromFirestore() {
+  setSyncStatus('syncing');
   try {
     const snap = await db.collection('users').doc(currentUser.uid)
       .collection('wheels').orderBy('createdAt', 'desc').get();
-
-    if (snap.empty) return;
 
     // Build the authoritative list from Firestore
     const remote = [];
@@ -256,20 +272,44 @@ async function syncLibraryFromFirestore() {
       });
     });
 
-    // Merge: keep remote as truth, drop local-only unsynced duplicates by name
+    // Merge: keep remote as truth; preserve local-only unsaved items
     const remoteNames = new Set(remote.map(w => w.name));
     const localOnly   = readCache().filter(w => !w.synced && !remoteNames.has(w.name));
     const merged      = [...localOnly, ...remote];
 
     writeCache(merged);
+    setSyncStatus('ok');
+    renderLibrary();   // always re-render after sync
 
-    // Re-render silently (no loading spinner)
-    if (document.getElementById('panel-library').classList.contains('active')) {
-      renderLibrary();
-    }
   } catch (e) {
-    console.warn('Firestore sync error:', e);
-    // Cache is still valid — user sees their local data
+    console.error('Firestore sync error:', e);
+    setSyncStatus('error', e);
+    // Still show whatever is in cache
+    renderLibrary();
+  }
+}
+
+/* ─── SYNC STATUS INDICATOR ─── */
+function setSyncStatus(state, err) {
+  const bar = document.getElementById('syncStatusBar');
+  if (!bar) return;
+  if (state === 'syncing') {
+    bar.style.display = 'flex';
+    bar.innerHTML = `<span class="sync-icon spin">⟳</span> Syncing with cloud…`;
+    bar.className = 'sync-status-bar syncing';
+  } else if (state === 'ok') {
+    bar.style.display = 'none';
+  } else if (state === 'error') {
+    bar.style.display = 'flex';
+    let hint = '';
+    if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
+      hint = ' — Firestore rules may have expired. <a href="https://console.firebase.google.com" target="_blank" rel="noopener">Fix in Firebase Console ↗</a>';
+    } else if (err?.code === 'unavailable' || err?.message?.includes('network')) {
+      hint = ' — Check your internet connection.';
+    }
+    bar.innerHTML = `<span class="sync-icon">⚠</span> Could not load from cloud${hint} &nbsp;
+      <button class="sync-retry-btn" onclick="loadLibrary()">Retry</button>`;
+    bar.className = 'sync-status-bar error';
   }
 }
 

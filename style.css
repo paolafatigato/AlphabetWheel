@@ -1008,7 +1008,62 @@ body {
 .wc-delete:hover { background: rgba(224,80,96,0.12); border-color: var(--red); color: var(--red); }
 .wc-delete:disabled { opacity: .4; cursor: default; }
 
-/* LIBRARY STATES */
+/* =====================================================
+   SYNC STATUS BAR
+   ===================================================== */
+.sync-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .5px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.sync-status-bar.syncing {
+  background: rgba(78,205,196,0.07);
+  border: 1px solid rgba(78,205,196,0.2);
+  color: var(--text-muted);
+}
+
+.sync-status-bar.error {
+  background: rgba(224,80,96,0.08);
+  border: 1px solid rgba(224,80,96,0.3);
+  color: #e07080;
+}
+
+.sync-status-bar a {
+  color: var(--teal);
+  text-decoration: underline;
+}
+
+.sync-icon { font-size: 14px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+
+.sync-retry-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(224,80,96,0.5);
+  background: transparent;
+  color: #e07080;
+  cursor: pointer;
+  transition: all .2s;
+  margin-left: auto;
+}
+.sync-retry-btn:hover { background: rgba(224,80,96,0.12); }
+
+/* ─── LIBRARY LOADING ─── */
 .library-loading {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
