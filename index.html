@@ -1,796 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Alphabet Wheel — Relative Pronouns Game</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=JetBrains+Mono:wght@400;600;700&family=Lora:ital,wght@0,400;1,400;1,600&display=swap" rel="stylesheet"/>
-<style>
-/* =====================================================
-   RESET & BASE
-   ===================================================== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --ink:        #080f14;
-  --surface:    #0d1820;
-  --card:       #0f2030;
-  --border:     #1a3a4a;
-  --teal:       #4ecdc4;
-  --teal-dim:   #2a8a85;
-  --teal-glow:  rgba(78,205,196,0.18);
-  --gold:       #c8943a;
-  --gold-light: #f0b84e;
-  --red:        #e05060;
-  --green:      #2ecc7a;
-  --green-dim:  #1a6640;
-  --text:       rgba(255,255,255,0.88);
-  --text-muted: rgba(255,255,255,0.42);
-  --text-dim:   rgba(255,255,255,0.65);
-  --rp-color:   #4ecdc4;
-  --rp-bg:      rgba(78,205,196,0.15);
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--ink);
-  color: var(--text);
-  font-family: 'Lora', serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* =====================================================
-   PAGE HEADER
-   ===================================================== */
-.page-header {
-  background: linear-gradient(160deg, #05141e 0%, #0a1f2e 60%, #061018 100%);
-  padding: 52px 24px 44px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  border-bottom: 1px solid var(--border);
-}
-
-.page-header::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(78,205,196,0.12) 0%, transparent 70%),
-    repeating-linear-gradient(45deg, transparent, transparent 28px, rgba(78,205,196,0.025) 28px, rgba(78,205,196,0.025) 29px);
-  pointer-events: none;
-}
-
-.header-tag {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: var(--teal);
-  display: block;
-  margin-bottom: 14px;
-  position: relative;
-}
-
-.page-header h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(38px, 6vw, 64px);
-  font-weight: 900;
-  color: #fff;
-  line-height: 1.05;
-  position: relative;
-  letter-spacing: -1px;
-}
-
-.page-header h1 em {
-  color: var(--teal);
-  font-style: italic;
-}
-
-.page-header p {
-  margin-top: 14px;
-  color: var(--text-muted);
-  font-style: italic;
-  font-size: 15px;
-  position: relative;
-}
-
-/* =====================================================
-   NAV TABS
-   ===================================================== */
-.tab-nav {
-  display: flex;
-  justify-content: center;
-  gap: 0;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.tab-btn {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  font-weight: 700;
-  padding: 16px 32px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: all .25s;
-}
-
-.tab-btn:hover { color: var(--teal); }
-.tab-btn.active {
-  color: var(--teal);
-  border-bottom-color: var(--teal);
-  background: rgba(78,205,196,0.05);
-}
-
-/* =====================================================
-   TAB PANELS
-   ===================================================== */
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
-/* =====================================================
-   GAME SECTION
-   ===================================================== */
-#game-section {
-  background: var(--ink);
-  padding: 0 0 72px;
-}
-
-.game-banner {
-  background: linear-gradient(135deg, #0d3a3a 0%, #0a2a2a 100%);
-  padding: 28px 32px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.game-banner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(60deg, transparent, transparent 12px, rgba(42,180,180,0.06) 12px, rgba(42,180,180,0.06) 13px);
-}
-
-.game-banner-inner { position: relative; }
-
-.game-banner .gb-tag {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--teal);
-  display: block;
-  margin-bottom: 10px;
-}
-
-.game-banner h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: 34px;
-  font-weight: 900;
-  color: #fff;
-  margin-bottom: 6px;
-}
-
-.game-banner h2 em { color: var(--teal); font-style: normal; }
-.game-banner p { color: var(--text-muted); font-style: italic; font-size: 14px; }
-
-/* WHEEL CONTAINER */
-.game-body {
-  max-width: 820px;
-  margin: 0 auto;
-  padding: 36px 24px 0;
-}
-
-.wheel-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* THE WHEEL */
-.wheel-ring {
-  position: relative;
-  width: 500px;
-  height: 500px;
-  flex-shrink: 0;
-}
-
-/* Letter dots */
-.letter-dot {
-  position: absolute;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #1a2a38;
-  border: 2px solid #2a4050;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all .25s;
-  transform: translate(-50%, -50%);
-  user-select: none;
-}
-
-.letter-dot.done-correct {
-  background: #1a4a30;
-  border-color: var(--green);
-  color: #7dffc0;
-}
-
-.letter-dot.done-skip {
-  background: #3a1a20;
-  border-color: #8b3545;
-  color: #e07080;
-}
-
-.letter-dot.active {
-  background: #1a5a5a;
-  border-color: var(--teal);
-  color: #fff;
-  box-shadow: 0 0 0 3px var(--teal-glow), 0 0 20px rgba(78,205,196,0.4);
-  animation: blink-dot 0.85s ease-in-out infinite;
-  width: 44px;
-  height: 44px;
-  font-size: 15px;
-  z-index: 10;
-}
-
-@keyframes blink-dot {
-  0%,100% { box-shadow: 0 0 0 3px rgba(78,205,196,0.35), 0 0 18px rgba(78,205,196,0.5); }
-  50%      { box-shadow: 0 0 0 7px rgba(78,205,196,0.12), 0 0 32px rgba(78,205,196,0.8); }
-}
-
-/* CENTER */
-.wheel-center {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 190px; height: 190px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #152d3a, #08141e);
-  border: 3px solid #1a4050;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  box-shadow: 0 0 50px rgba(0,0,0,0.7), inset 0 0 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(78,205,196,0.08);
-}
-
-.timer-ring-svg {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 200px; height: 200px;
-  pointer-events: none;
-}
-
-.timer-track { fill: none; stroke: #1a3545; stroke-width: 6; }
-
-.timer-arc {
-  fill: none;
-  stroke: var(--teal);
-  stroke-width: 6;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear, stroke .5s;
-}
-
-.timer-arc.warn   { stroke: #f0a830; }
-.timer-arc.danger { stroke: var(--red); }
-
-.timer-number {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 44px;
-  font-weight: 700;
-  color: var(--teal);
-  line-height: 1;
-  transition: color .3s;
-  z-index: 2;
-}
-
-.timer-number.warn   { color: #f0a830; }
-.timer-number.danger { color: var(--red); }
-
-.timer-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  z-index: 2;
-}
-
-.current-letter-badge {
-  font-family: 'Playfair Display', serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-muted);
-  z-index: 2;
-  margin-bottom: 2px;
-}
-
-/* CLUE PANEL */
-.clue-panel {
-  width: 100%;
-  max-width: 500px;
-  background: #0a1e2a;
-  border: 1.5px solid var(--border);
-  border-radius: 4px;
-  padding: 24px 28px;
-  text-align: center;
-  margin-top: 22px;
-  position: relative;
-  overflow: hidden;
-}
-
-.clue-panel::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--teal), transparent);
-}
-
-.clue-panel .clue-tag {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: rgba(78,205,196,.6);
-  display: block;
-  margin-bottom: 10px;
-}
-
-.clue-text {
-  font-family: 'Lora', serif;
-  font-size: 17px;
-  font-style: italic;
-  color: rgba(255,255,255,.9);
-  line-height: 1.55;
-  min-height: 52px;
-}
-
-.clue-text em, .clue-text .relative-pronoun {
-  color: var(--teal);
-  font-style: normal;
-  font-weight: 600;
-  background: var(--rp-bg);
-  padding: 1px 5px;
-  border-radius: 3px;
-}
-
-.solution-reveal {
-  display: none;
-  margin-top: 14px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  color: #7dffc0;
-  text-transform: uppercase;
-  animation: fadeUp .3s ease;
-}
-
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(8px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-
-/* GAME CONTROLS */
-.game-controls {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 18px;
-}
-
-.gc-btn {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 11px 24px;
-  border-radius: 3px;
-  border: none;
-  cursor: pointer;
-  font-weight: 700;
-  transition: all .2s;
-}
-
-.gc-btn:disabled { opacity: .4; cursor: default; }
-
-.gc-start   { background: var(--teal); color: #08141e; }
-.gc-start:not(:disabled):hover { background: #3bbab1; transform: translateY(-1px); }
-
-.gc-reveal  { background: transparent; border: 1.5px solid var(--teal); color: var(--teal); }
-.gc-reveal:not(:disabled):hover { background: var(--teal-glow); }
-
-.gc-next    { background: var(--gold); color: #fff; }
-.gc-next:not(:disabled):hover { background: #a87020; transform: translateY(-1px); }
-
-.gc-restart { background: #1a2a38; color: var(--text-dim); border: 1px solid #2a3a4a; }
-.gc-restart:hover { background: #223040; }
-
-/* SCORE ROW */
-.game-score-row {
-  display: flex;
-  gap: 28px;
-  justify-content: center;
-  margin-top: 18px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.game-score-row span {
-  color: var(--teal);
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.timeout-msg {
-  display: none;
-  color: var(--red);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-top: 10px;
-  animation: fadeUp .25s ease;
-}
-
-/* =====================================================
-   CUSTOM WHEEL EDITOR
-   ===================================================== */
-#editor-section {
-  background: var(--ink);
-  padding: 0 0 80px;
-}
-
-.editor-banner {
-  background: linear-gradient(135deg, #1a1a0a 0%, #0f0f06 100%);
-  padding: 28px 32px;
-  text-align: center;
-  border-bottom: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-}
-
-.editor-banner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(200,148,58,0.04) 18px, rgba(200,148,58,0.04) 19px);
-}
-
-.editor-banner-inner { position: relative; }
-
-.editor-banner .eb-tag {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--gold-light);
-  display: block;
-  margin-bottom: 10px;
-}
-
-.editor-banner h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: 32px;
-  font-weight: 900;
-  color: #fff;
-  margin-bottom: 6px;
-}
-
-.editor-banner h2 em { color: var(--gold-light); font-style: normal; }
-.editor-banner p { color: var(--text-muted); font-style: italic; font-size: 14px; }
-
-.editor-body {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 32px 24px;
-}
-
-/* INFO BAR */
-.info-bar {
-  background: #0a1e10;
-  border: 1px solid #1a4025;
-  border-radius: 4px;
-  padding: 14px 20px;
-  margin-bottom: 28px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: #5ecf88;
-  letter-spacing: 0.5px;
-  line-height: 1.6;
-}
-
-.info-bar strong { color: #7dffc0; }
-
-/* RP LEGEND */
-.rp-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 28px;
-  align-items: center;
-}
-
-.rp-legend-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-right: 4px;
-}
-
-.rp-pill {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  background: var(--rp-bg);
-  color: var(--teal);
-  padding: 3px 10px;
-  border-radius: 30px;
-  border: 1px solid rgba(78,205,196,0.25);
-}
-
-/* EDITOR TABLE */
-.editor-table-wrap {
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.editor-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.editor-table thead th {
-  background: #0a1e2e;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 14px 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-
-.editor-table thead th:first-child { width: 48px; text-align: center; }
-.editor-table thead th:nth-child(2) { width: 180px; }
-.editor-table thead th:nth-child(3) { }
-.editor-table thead th:last-child { width: 200px; }
-
-.editor-table tbody tr {
-  border-bottom: 1px solid rgba(26,58,74,0.5);
-  transition: background .15s;
-}
-
-.editor-table tbody tr:hover { background: rgba(78,205,196,0.03); }
-.editor-table tbody tr:last-child { border-bottom: none; }
-
-.editor-table td {
-  padding: 10px 14px;
-  vertical-align: middle;
-}
-
-.letter-cell {
-  text-align: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--teal);
-  background: rgba(78,205,196,0.05);
-}
-
-.editor-input {
-  width: 100%;
-  background: #08131a;
-  border: 1px solid #1e3545;
-  border-radius: 3px;
-  color: var(--text);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  padding: 8px 12px;
-  transition: border-color .2s, box-shadow .2s;
-  outline: none;
-}
-
-.editor-input::placeholder {
-  color: rgba(255,255,255,.2);
-  font-style: italic;
-}
-
-.editor-input:focus {
-  border-color: var(--teal-dim);
-  box-shadow: 0 0 0 2px rgba(78,205,196,0.1);
-}
-
-/* DEFINITION CELL — includes preview */
-.def-cell { vertical-align: top; padding-top: 10px; }
-
-.def-input-wrap { position: relative; }
-
-.def-preview {
-  margin-top: 5px;
-  padding: 6px 10px;
-  background: rgba(78,205,196,0.04);
-  border: 1px dashed rgba(78,205,196,0.2);
-  border-radius: 3px;
-  font-family: 'Lora', serif;
-  font-size: 12px;
-  font-style: italic;
-  color: var(--text-dim);
-  line-height: 1.4;
-  min-height: 30px;
-  display: none;
-}
-
-.def-preview .relative-pronoun {
-  color: var(--teal);
-  font-style: normal;
-  font-weight: 600;
-  background: var(--rp-bg);
-  padding: 0 4px;
-  border-radius: 2px;
-}
-
-/* STATUS CELL */
-.status-cell { text-align: center; }
-
-.status-badge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  padding: 4px 9px;
-  border-radius: 20px;
-  font-weight: 700;
-}
-
-.status-badge.default {
-  background: rgba(100,100,120,0.2);
-  color: rgba(255,255,255,.35);
-  border: 1px solid rgba(255,255,255,.1);
-}
-
-.status-badge.custom {
-  background: rgba(78,205,196,0.12);
-  color: var(--teal);
-  border: 1px solid rgba(78,205,196,0.3);
-}
-
-/* EDITOR ACTIONS */
-.editor-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 28px;
-}
-
-.ea-btn {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  font-weight: 700;
-  padding: 13px 28px;
-  border-radius: 3px;
-  border: none;
-  cursor: pointer;
-  transition: all .2s;
-}
-
-.ea-generate {
-  background: var(--gold-light);
-  color: #1a1000;
-}
-.ea-generate:hover { background: #e0a840; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(200,148,58,0.3); }
-
-.ea-save {
-  background: transparent;
-  border: 1.5px solid var(--teal);
-  color: var(--teal);
-}
-.ea-save:hover { background: var(--teal-glow); transform: translateY(-1px); }
-
-.ea-clear {
-  background: transparent;
-  border: 1.5px solid rgba(255,255,255,.15);
-  color: var(--text-muted);
-}
-.ea-clear:hover { border-color: rgba(255,255,255,.3); color: var(--text-dim); }
-
-/* TOAST */
-.toast {
-  position: fixed;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: #0a2030;
-  border: 1px solid var(--teal);
-  color: var(--teal);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 14px 28px;
-  border-radius: 4px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-  z-index: 999;
-  transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s;
-  opacity: 0;
-}
-
-.toast.show {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
-
-.toast.error {
-  border-color: var(--red);
-  color: var(--red);
-}
-
-/* =====================================================
-   FOOTER
-   ===================================================== */
-.page-footer {
-  background: #05080c;
-  border-top: 1px solid var(--border);
-  padding: 28px 24px;
-  text-align: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-/* =====================================================
-   RESPONSIVE
-   ===================================================== */
-@media (max-width: 600px) {
-  .wheel-ring { width: 340px; height: 340px; }
-  .wheel-center { width: 130px; height: 130px; }
-  .timer-ring-svg { width: 140px; height: 140px; }
-  .timer-number { font-size: 30px; }
-  .tab-btn { padding: 12px 16px; font-size: 9px; letter-spacing: 1px; }
-  .editor-table thead th:nth-child(3),
-  .editor-table td.def-cell { display: none; }
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--ink); }
-::-webkit-scrollbar-thumb { background: #1a3a4a; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--teal-dim); }
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alphabet Wheel — Relative Pronouns Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=JetBrains+Mono:wght@400;600;700&family=Lora:ital,wght@0,400;1,400;1,600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
+
+<!-- ===================== AUTH BAR ===================== -->
+<div class="auth-bar" id="authBar">
+  <div class="auth-bar-inner">
+    <span class="auth-bar-brand">🎡 Alphabet Wheel</span>
+    <div class="auth-bar-right">
+
+      <!-- NOT logged in -->
+      <div id="authLoggedOut" class="auth-logged-out">
+        <span class="auth-hint">Login to save your wheels</span>
+        <button class="auth-btn auth-btn-login" onclick="authLogin()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866.549 3.921 1.453l2.814-2.814C17.503 2.988 15.139 2 12.545 2 7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748L12.545 10.239z"/>
+          </svg>
+          Sign in with Google
+        </button>
+      </div>
+
+      <!-- Logged in -->
+      <div id="authLoggedIn" class="auth-logged-in" style="display:none">
+        <img id="authAvatar" class="auth-avatar" src="" alt="Profile picture"/>
+        <span id="authName" class="auth-name"></span>
+        <button class="auth-btn auth-btn-logout" onclick="authLogout()">Sign out</button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- ===================== PAGE HEADER ===================== -->
 <header class="page-header">
@@ -801,585 +47,228 @@ body {
 
 <!-- ===================== TAB NAV ===================== -->
 <nav class="tab-nav">
-  <button class="tab-btn active" onclick="switchTab('game')" id="tab-game">▶ Play Game</button>
-  <button class="tab-btn" onclick="switchTab('editor')" id="tab-editor">✏ Build Your Wheel</button>
+  <button class="tab-btn active" onclick="switchTab('game')"    id="tab-game">▶ Play Game</button>
+  <button class="tab-btn"        onclick="switchTab('editor')"  id="tab-editor">✏ Build Your Wheel</button>
+  <button class="tab-btn"        onclick="switchTab('library')" id="tab-library">📚 My Wheels</button>
 </nav>
 
 <!-- ===================== GAME PANEL ===================== -->
 <div class="tab-panel active" id="panel-game">
-<section id="game-section">
-  <div class="game-banner">
-    <div class="game-banner-inner">
-      <span class="gb-tag">🎮 Vocabulary Game · Relative Pronouns</span>
-      <h2>The <em>Alphabet Wheel</em></h2>
-      <p>Read the clue — guess the word for each letter. 22 seconds per letter!</p>
+  <section id="game-section">
+    <div class="game-banner">
+      <div class="game-banner-inner">
+        <span class="gb-tag">🎮 Vocabulary Game · Relative Pronouns</span>
+        <h2>The <em>Alphabet Wheel</em></h2>
+        <p>Read the clue — guess the word for each letter. 22 seconds per letter!</p>
+      </div>
     </div>
-  </div>
 
-  <div class="game-body">
-    <div class="wheel-area">
+    <div class="game-body">
+      <div class="wheel-area">
 
-      <!-- THE WHEEL -->
-      <div class="wheel-ring" id="wheelRing">
-        <div class="wheel-center" id="wheelCenter">
-          <svg class="timer-ring-svg" viewBox="0 0 200 200">
-            <circle class="timer-track" cx="100" cy="100" r="88"/>
-            <circle class="timer-arc" id="timerArc" cx="100" cy="100" r="88"
-              stroke-dasharray="553" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
-          </svg>
-          <div class="current-letter-badge" id="centerLetter">A–Z</div>
-          <div class="timer-number" id="timerNum">22</div>
-          <div class="timer-label">seconds</div>
+        <!-- THE WHEEL -->
+        <div class="wheel-ring" id="wheelRing">
+          <div class="wheel-center" id="wheelCenter">
+            <svg class="timer-ring-svg" viewBox="0 0 200 200" aria-hidden="true">
+              <circle class="timer-track" cx="100" cy="100" r="88"/>
+              <circle class="timer-arc" id="timerArc" cx="100" cy="100" r="88"
+                stroke-dasharray="553" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+            </svg>
+            <div class="current-letter-badge" id="centerLetter">A–Z</div>
+            <div class="timer-number" id="timerNum">22</div>
+            <div class="timer-label">seconds</div>
+          </div>
+          <!-- Letter dots injected by JS -->
         </div>
-        <!-- Letter dots injected by JS -->
-      </div>
 
-      <!-- CLUE PANEL -->
-      <div class="clue-panel">
-        <span class="clue-tag">🔍 Clue</span>
-        <div class="clue-text" id="clueText">Press <strong style="color:var(--teal)">START</strong> to begin the game!</div>
-        <div class="solution-reveal" id="solutionReveal"></div>
-        <div class="timeout-msg" id="timeoutMsg">⏱ Time's up!</div>
-      </div>
+        <!-- CLUE PANEL -->
+        <div class="clue-panel">
+          <span class="clue-tag">🔍 Clue</span>
+          <div class="clue-text" id="clueText">Press <strong style="color:var(--teal)">START</strong> to begin the game!</div>
+          <div class="solution-reveal" id="solutionReveal"></div>
+          <div class="timeout-msg" id="timeoutMsg">⏱ Time's up!</div>
+        </div>
 
-      <!-- CONTROLS -->
-      <div class="game-controls">
-        <button class="gc-btn gc-start"   id="btnStart"   onclick="gameStart()">▶ START</button>
-        <button class="gc-btn gc-reveal"  id="btnReveal"  onclick="gameReveal()"  disabled>👁 SHOW ANSWER</button>
-        <button class="gc-btn gc-next"    id="btnNext"    onclick="gameNext()"    disabled>NEXT →</button>
-        <button class="gc-btn gc-restart" onclick="gameRestart()">↺ RESTART</button>
-      </div>
+        <!-- CONTROLS -->
+        <div class="game-controls">
+          <button class="gc-btn gc-start"   id="btnStart"   onclick="gameStart()">▶ START</button>
+          <button class="gc-btn gc-reveal"  id="btnReveal"  onclick="gameReveal()"  disabled>👁 SHOW ANSWER</button>
+          <button class="gc-btn gc-next"    id="btnNext"    onclick="gameNext()"    disabled>NEXT →</button>
+          <button class="gc-btn gc-restart" onclick="gameRestart()">↺ RESTART</button>
+        </div>
 
-      <!-- SCORE -->
-      <div class="game-score-row">
-        <div>Correct: <span id="gScoreCorrect">0</span></div>
-        <div>Skipped: <span id="gScoreSkip">0</span></div>
-        <div>Letter: <span id="gScoreIdx">—</span> / 26</div>
-      </div>
+        <!-- SCORE -->
+        <div class="game-score-row">
+          <div>Correct: <span id="gScoreCorrect">0</span></div>
+          <div>Skipped: <span id="gScoreSkip">0</span></div>
+          <div>Letter: <span id="gScoreIdx">—</span> / 26</div>
+        </div>
 
-    </div><!-- .wheel-area -->
-  </div><!-- .game-body -->
-</section>
+      </div><!-- .wheel-area -->
+    </div><!-- .game-body -->
+  </section>
 </div><!-- panel-game -->
 
 <!-- ===================== EDITOR PANEL ===================== -->
 <div class="tab-panel" id="panel-editor">
-<section id="editor-section">
-  <div class="editor-banner">
-    <div class="editor-banner-inner">
-      <span class="eb-tag">✏ Custom Wheel Builder</span>
-      <h2>Build Your <em>Own</em> Wheel</h2>
-      <p>Override any word or definition — empty fields keep the default values</p>
-    </div>
-  </div>
+  <section id="editor-section">
 
-  <div class="editor-body">
-
-    <div class="info-bar">
-      💡 <strong>How it works:</strong> Fill in any rows you want to customise. Leave a field empty to keep the default.
-      Relative pronouns (<strong>who, that, which, where, whose, whom</strong>) are automatically highlighted in your clues.
-      Click <strong>Generate My Wheel</strong> to apply your changes — then switch to the Play tab to play!
+    <div class="editor-banner">
+      <div class="editor-banner-inner">
+        <span class="eb-tag">✏ Custom Wheel Builder</span>
+        <h2>Build Your <em>Own</em> Wheel</h2>
+        <p>Override any word or definition — empty fields keep the default values</p>
+      </div>
     </div>
 
-    <div class="rp-legend">
-      <span class="rp-legend-label">Relative pronouns:</span>
-      <span class="rp-pill">who</span>
-      <span class="rp-pill">that</span>
-      <span class="rp-pill">which</span>
-      <span class="rp-pill">where</span>
-      <span class="rp-pill">whose</span>
-      <span class="rp-pill">whom</span>
+    <!-- Login gate (shown when NOT logged in) -->
+    <div class="login-gate" id="loginGate">
+      <div class="login-gate-inner">
+        <div class="login-gate-icon">🔒</div>
+        <h3>Login required</h3>
+        <p>Sign in with Google to create custom wheels and save them to your personal library — accessible from any device.</p>
+        <button class="auth-btn auth-btn-login lg" onclick="authLogin()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866.549 3.921 1.453l2.814-2.814C17.503 2.988 15.139 2 12.545 2 7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748L12.545 10.239z"/>
+          </svg>
+          Sign in with Google
+        </button>
+      </div>
     </div>
 
-    <div class="editor-table-wrap">
-      <table class="editor-table" id="editorTable">
-        <thead>
-          <tr>
-            <th>Letter</th>
-            <th>Word</th>
-            <th>Definition / Clue</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="editorTbody">
-          <!-- Rows injected by JS -->
-        </tbody>
-      </table>
-    </div>
+    <!-- Editor body (shown when logged in) -->
+    <div class="editor-body" id="editorBody" style="display:none">
 
-    <div class="editor-actions">
-      <button class="ea-btn ea-generate" onclick="generateCustomWheel()">⚙ Generate My Wheel</button>
-      <button class="ea-btn ea-save"     onclick="saveCustomWheel()">💾 Save My Wheel</button>
-      <button class="ea-btn ea-clear"    onclick="clearCustomWheel()">✕ Clear All Custom</button>
-    </div>
+      <div class="info-bar">
+        💡 <strong>How it works:</strong> Fill in any rows you want to customise. Leave a field empty to keep the default.
+        Relative pronouns (<strong>who, that, which, where, whose, whom</strong>) are automatically highlighted in your clues.
+        Click <strong>Generate My Wheel</strong> to apply — then switch to the Play tab to play!
+      </div>
 
-  </div><!-- .editor-body -->
-</section>
+      <div class="rp-legend">
+        <span class="rp-legend-label">Relative pronouns:</span>
+        <span class="rp-pill">who</span>
+        <span class="rp-pill">that</span>
+        <span class="rp-pill">which</span>
+        <span class="rp-pill">where</span>
+        <span class="rp-pill">whose</span>
+        <span class="rp-pill">whom</span>
+      </div>
+
+      <div class="editor-table-wrap">
+        <table class="editor-table" id="editorTable">
+          <thead>
+            <tr>
+              <th>Letter</th>
+              <th>Word</th>
+              <th>Definition / Clue</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="editorTbody">
+            <!-- Rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="editor-actions">
+        <button class="ea-btn ea-generate" onclick="generateCustomWheel()">⚙ Generate My Wheel</button>
+        <button class="ea-btn ea-save"     onclick="openSaveModal()">☁ Save to Cloud</button>
+        <button class="ea-btn ea-clear"    onclick="clearCustomWheel()">✕ Clear All Custom</button>
+      </div>
+
+    </div><!-- #editorBody -->
+  </section>
 </div><!-- panel-editor -->
 
-<!-- FOOTER -->
+<!-- ===================== LIBRARY PANEL ===================== -->
+<div class="tab-panel" id="panel-library">
+  <section id="library-section">
+
+    <div class="library-banner">
+      <div class="library-banner-inner">
+        <span class="lb-tag">📚 Cloud Library</span>
+        <h2>My <em>Saved</em> Wheels</h2>
+        <p>Your custom wheels, synced across all your devices</p>
+      </div>
+    </div>
+
+    <div class="library-body">
+
+      <!-- Login gate for library -->
+      <div class="login-gate" id="libraryLoginGate" style="padding:60px 24px">
+        <div class="login-gate-inner">
+          <div class="login-gate-icon">☁</div>
+          <h3>Your wheel library</h3>
+          <p>Sign in to access your saved wheels from any device.</p>
+          <button class="auth-btn auth-btn-login lg" onclick="authLogin()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866.549 3.921 1.453l2.814-2.814C17.503 2.988 15.139 2 12.545 2 7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748L12.545 10.239z"/>
+            </svg>
+            Sign in with Google
+          </button>
+        </div>
+      </div>
+
+      <!-- Library content (shown when logged in) -->
+      <div id="libraryContent" style="display:none">
+        <div class="library-header-row">
+          <div class="library-count" id="libraryCount">— wheels saved</div>
+          <button class="ea-btn ea-save" onclick="openSaveModal()" style="padding:9px 18px;font-size:10px">
+            + Save Current Wheel
+          </button>
+        </div>
+        <div class="wheels-grid" id="wheelsGrid">
+          <!-- Wheel cards injected by JS -->
+        </div>
+        <div class="library-empty" id="libraryEmpty" style="display:none">
+          <div class="library-empty-icon">🎡</div>
+          <p>No saved wheels yet.</p>
+          <p style="font-size:12px;margin-top:6px;opacity:.6">
+            Build a custom wheel in the editor and save it here.
+          </p>
+        </div>
+      </div>
+
+    </div><!-- .library-body -->
+  </section>
+</div><!-- panel-library -->
+
+<!-- ===================== SAVE MODAL ===================== -->
+<div class="modal-overlay" id="saveModal" onclick="handleModalOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">💾 Save Wheel</div>
+    <p class="modal-desc">Give this wheel a name so you can find it later.</p>
+    <input
+      type="text"
+      class="modal-input"
+      id="wheelNameInput"
+      placeholder="e.g. Animals · B1 · Class 3A"
+      maxlength="60"
+      onkeydown="if(event.key==='Enter') saveWheelToCloud()"
+    />
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeSaveModal()">Cancel</button>
+      <button class="modal-btn modal-btn-save"   onclick="saveWheelToCloud()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FOOTER ===================== -->
 <footer class="page-footer">
-  Alphabet Wheel — Vocabulary Game · Relative Pronouns · Built with vanilla JS
+  Alphabet Wheel — Vocabulary Game · Relative Pronouns · Vanilla JS + Firebase
 </footer>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- ===================== FIREBASE (compat CDN) ===================== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<!-- =====================================================
-     JAVASCRIPT
-     ===================================================== -->
-<script>
-// =====================================================
-// 1. DEFAULT DATASET
-// =====================================================
-const DEFAULT_CLUES = [
-  { letter:'A', word:'Ambitious',  clue:'Somebody who always aims at the best and wants to succeed' },
-  { letter:'B', word:'Bottle',     clue:'An object that contains liquids and has a narrow neck' },
-  { letter:'C', word:'Cathedral',  clue:'A place where religious people pray and artistic people admire the architecture' },
-  { letter:'D', word:'Doctor',     clue:'A person who helps sick people get better and works in a hospital' },
-  { letter:'E', word:'Elephant',   clue:'An animal that has a long trunk, big ears and never forgets' },
-  { letter:'F', word:'Fountain',   clue:'A structure that sends water upward, often found in public squares' },
-  { letter:'G', word:'Guitar',     clue:'An instrument that musicians play with their fingers or a pick, using strings' },
-  { letter:'H', word:'Hospital',   clue:'A place where doctors and nurses work and sick people are treated' },
-  { letter:'I', word:'Island',     clue:'A place that is completely surrounded by water on all sides' },
-  { letter:'J', word:'Judge',      clue:'A person who sits in a court and decides if someone is guilty or innocent' },
-  { letter:'K', word:'Kitchen',    clue:'A room where people cook and prepare food, usually with an oven' },
-  { letter:'L', word:'Library',    clue:'A place where you can borrow books and study in silence' },
-  { letter:'M', word:'Mountain',   clue:'A natural structure that rises very high above the surrounding land' },
-  { letter:'N', word:'Newspaper',  clue:'An object that contains daily news and articles, printed on paper' },
-  { letter:'O', word:'Ocean',      clue:'A very large body of water that covers most of the Earth\'s surface' },
-  { letter:'P', word:'Passport',   clue:'A document that allows you to travel to other countries legally' },
-  { letter:'Q', word:'Queen',      clue:'A woman who rules a kingdom, often wearing a crown' },
-  { letter:'R', word:'Rainbow',    clue:'A colourful arc that appears in the sky after rain and sunlight combine' },
-  { letter:'S', word:'Submarine',  clue:'A vehicle that travels completely underwater, used by the navy' },
-  { letter:'T', word:'Telescope',  clue:'An instrument that scientists use to observe distant stars and planets' },
-  { letter:'U', word:'Umbrella',   clue:'An object that protects you from rain when you open it above your head' },
-  { letter:'V', word:'Volcano',    clue:'A mountain that can erupt and release hot lava and ash' },
-  { letter:'W', word:'Wallet',     clue:'An object where you keep your money, cards and ID documents' },
-  { letter:'X', word:'Xylophone',  clue:'An instrument that you play by hitting coloured wooden bars with small mallets' },
-  { letter:'Y', word:'Yacht',      clue:'A vehicle that sails on the sea, often owned by wealthy people' },
-  { letter:'Z', word:'Zoo',        clue:'A place where you can see animals from all over the world in enclosures' },
-];
+<!-- APP -->
+<script src="app.js"></script>
 
-// Active CLUES array (modified by custom wheel builder)
-let CLUES = DEFAULT_CLUES.map(c => ({ ...c }));
-
-// =====================================================
-// 2. UTILITY: HIGHLIGHT RELATIVE PRONOUNS
-// =====================================================
-function highlightRelativePronouns(text) {
-  if (!text) return text;
-  const rp = /\b(who|that|which|where|whose|whom)\b/gi;
-  return text.replace(rp, '<em class="relative-pronoun">$1</em>');
-}
-
-// =====================================================
-// 3. WHEEL CONSTANTS & STATE
-// =====================================================
-const WHEEL_SIZE  = 500;
-const CENTER      = WHEEL_SIZE / 2;
-const RADIUS      = 210;
-const TOTAL_SECS  = 22;
-const ARC_FULL    = 2 * Math.PI * 88; // r=88 from SVG
-
-let gIdx      = 0;
-let gTimer    = null;
-let gSecsLeft = TOTAL_SECS;
-let gRunning  = false;
-let gCorrect  = 0;
-let gSkip     = 0;
-let gRevealed = false;
-
-// =====================================================
-// 4. BUILD WHEEL
-// =====================================================
-function buildWheel() {
-  const ring = document.getElementById('wheelRing');
-  ring.querySelectorAll('.letter-dot').forEach(d => d.remove());
-
-  CLUES.forEach((c, i) => {
-    const angle = (i / CLUES.length) * 2 * Math.PI - Math.PI / 2;
-    const ringR = getComputedWheelRadius();
-    const x = CENTER + ringR * Math.cos(angle);
-    const y = CENTER + ringR * Math.sin(angle);
-
-    const dot = document.createElement('div');
-    dot.className = 'letter-dot';
-    dot.id = 'dot-' + i;
-    dot.textContent = c.letter;
-    dot.style.left = x + 'px';
-    dot.style.top  = y + 'px';
-    ring.appendChild(dot);
-  });
-
-  updateDots();
-}
-
-function getComputedWheelRadius() {
-  const ring = document.getElementById('wheelRing');
-  if (!ring) return RADIUS;
-  const w = ring.offsetWidth;
-  if (w < 360) return w * 0.42;
-  return RADIUS;
-}
-
-function updateDots() {
-  CLUES.forEach((_, i) => {
-    const dot = document.getElementById('dot-' + i);
-    if (!dot) return;
-    dot.className = 'letter-dot';
-    if (i < gIdx) dot.classList.add(dot.dataset.result || 'done-skip');
-    else if (i === gIdx) dot.classList.add('active');
-  });
-}
-
-function setDotResult(i, result) {
-  const dot = document.getElementById('dot-' + i);
-  if (dot) dot.dataset.result = result;
-}
-
-// =====================================================
-// 5. TIMER
-// =====================================================
-function startTimer() {
-  gSecsLeft = TOTAL_SECS;
-  renderTimer();
-  clearInterval(gTimer);
-  gTimer = setInterval(() => {
-    gSecsLeft--;
-    renderTimer();
-    if (gSecsLeft <= 0) { clearInterval(gTimer); onTimeout(); }
-  }, 1000);
-}
-
-function renderTimer() {
-  const num = document.getElementById('timerNum');
-  const arc = document.getElementById('timerArc');
-  const pct = gSecsLeft / TOTAL_SECS;
-  arc.style.strokeDashoffset = ARC_FULL * (1 - pct);
-  num.textContent = gSecsLeft;
-  num.className = 'timer-number';
-  arc.className  = 'timer-arc';
-  if (gSecsLeft <= 5)       { num.classList.add('danger'); arc.classList.add('danger'); }
-  else if (gSecsLeft <= 10) { num.classList.add('warn');   arc.classList.add('warn');   }
-}
-
-function stopTimer() { clearInterval(gTimer); }
-
-function onTimeout() {
-  document.getElementById('timeoutMsg').style.display = 'block';
-  document.getElementById('btnReveal').disabled = false;
-  document.getElementById('btnNext').disabled   = false;
-}
-
-// =====================================================
-// 6. GAME FLOW
-// =====================================================
-function gameStart() {
-  document.getElementById('btnStart').disabled   = true;
-  document.getElementById('btnReveal').disabled  = false;
-  document.getElementById('btnNext').disabled    = false;
-  gRunning = true;
-  showCurrentClue();
-  startTimer();
-}
-
-function showCurrentClue() {
-  if (gIdx >= CLUES.length) { gameEnd(); return; }
-  gRevealed = false;
-  document.getElementById('timeoutMsg').style.display      = 'none';
-  document.getElementById('solutionReveal').style.display  = 'none';
-  document.getElementById('solutionReveal').textContent    = '';
-  // Apply RP highlighting to clue text
-  document.getElementById('clueText').innerHTML = highlightRelativePronouns(CLUES[gIdx].clue);
-  document.getElementById('centerLetter').textContent = CLUES[gIdx].letter;
-  document.getElementById('gScoreIdx').textContent    = gIdx + 1;
-  updateDots();
-}
-
-function gameReveal() {
-  if (!gRunning || gRevealed) return;
-  gRevealed = true;
-  stopTimer();
-  const sol = document.getElementById('solutionReveal');
-  sol.textContent    = CLUES[gIdx].word;
-  sol.style.display  = 'block';
-  document.getElementById('btnReveal').disabled = true;
-}
-
-function gameNext() {
-  if (!gRunning) return;
-  stopTimer();
-  const timedOut = document.getElementById('timeoutMsg').style.display === 'block';
-  if (timedOut) { gSkip++;    setDotResult(gIdx, 'done-skip');    }
-  else          { gCorrect++; setDotResult(gIdx, 'done-correct'); }
-  document.getElementById('gScoreCorrect').textContent = gCorrect;
-  document.getElementById('gScoreSkip').textContent    = gSkip;
-  gIdx++;
-  document.getElementById('btnReveal').disabled = false;
-  showCurrentClue();
-  if (gIdx < CLUES.length) startTimer();
-}
-
-function gameRestart() {
-  stopTimer();
-  gIdx = 0; gCorrect = 0; gSkip = 0;
-  gRunning = false; gRevealed = false;
-  CLUES.forEach((_, i) => {
-    const d = document.getElementById('dot-' + i);
-    if (d) { d.dataset.result = ''; d.className = 'letter-dot'; }
-  });
-  document.getElementById('clueText').innerHTML = 'Press <strong style="color:var(--teal)">START</strong> to begin the game!';
-  document.getElementById('solutionReveal').style.display = 'none';
-  document.getElementById('timeoutMsg').style.display     = 'none';
-  document.getElementById('centerLetter').textContent     = 'A–Z';
-  document.getElementById('timerNum').textContent         = '22';
-  document.getElementById('timerArc').style.strokeDashoffset = '0';
-  document.getElementById('timerArc').className   = 'timer-arc';
-  document.getElementById('timerNum').className   = 'timer-number';
-  document.getElementById('gScoreCorrect').textContent = '0';
-  document.getElementById('gScoreSkip').textContent    = '0';
-  document.getElementById('gScoreIdx').textContent     = '—';
-  document.getElementById('btnStart').disabled   = false;
-  document.getElementById('btnReveal').disabled  = true;
-  document.getElementById('btnNext').disabled    = true;
-  updateDots();
-}
-
-function gameEnd() {
-  gRunning = false;
-  document.getElementById('clueText').innerHTML =
-    '🎉 <strong style="color:var(--teal)">Game complete!</strong><br>' +
-    '<span style="font-size:14px;color:rgba(255,255,255,.7)">Words guessed: <strong style="color:#7dffc0">' +
-    gCorrect + '</strong> / 26</span>';
-  document.getElementById('centerLetter').textContent = '✓';
-  document.getElementById('btnReveal').disabled = true;
-  document.getElementById('btnNext').disabled   = true;
-  updateDots();
-}
-
-// =====================================================
-// 7. EDITOR — BUILD TABLE
-// =====================================================
-function buildEditorTable() {
-  const tbody = document.getElementById('editorTbody');
-  tbody.innerHTML = '';
-
-  DEFAULT_CLUES.forEach((def, i) => {
-    const tr = document.createElement('tr');
-    tr.id = 'erow-' + i;
-
-    // Letter cell
-    const tdLetter = document.createElement('td');
-    tdLetter.className = 'letter-cell';
-    tdLetter.textContent = def.letter;
-    tr.appendChild(tdLetter);
-
-    // Word input
-    const tdWord = document.createElement('td');
-    const wordInput = document.createElement('input');
-    wordInput.type        = 'text';
-    wordInput.className   = 'editor-input';
-    wordInput.id          = 'ei-word-' + i;
-    wordInput.placeholder = def.word + ' (default)';
-    wordInput.maxLength   = 40;
-    wordInput.addEventListener('input', () => updateRowStatus(i));
-    tdWord.appendChild(wordInput);
-    tr.appendChild(tdWord);
-
-    // Definition input + live preview
-    const tdDef = document.createElement('td');
-    tdDef.className = 'def-cell';
-
-    const defWrap = document.createElement('div');
-    defWrap.className = 'def-input-wrap';
-
-    const defInput = document.createElement('input');
-    defInput.type        = 'text';
-    defInput.className   = 'editor-input';
-    defInput.id          = 'ei-def-' + i;
-    defInput.placeholder = def.clue.substring(0, 55) + '…';
-    defInput.maxLength   = 200;
-
-    const preview = document.createElement('div');
-    preview.className = 'def-preview';
-    preview.id = 'ei-preview-' + i;
-
-    defInput.addEventListener('input', () => {
-      updateRowStatus(i);
-      const val = defInput.value.trim();
-      if (val) {
-        preview.innerHTML = highlightRelativePronouns(val);
-        preview.style.display = 'block';
-      } else {
-        preview.style.display = 'none';
-      }
-    });
-
-    defWrap.appendChild(defInput);
-    defWrap.appendChild(preview);
-    tdDef.appendChild(defWrap);
-    tr.appendChild(tdDef);
-
-    // Status badge
-    const tdStatus = document.createElement('td');
-    tdStatus.className = 'status-cell';
-    const badge = document.createElement('span');
-    badge.className = 'status-badge default';
-    badge.id        = 'ei-status-' + i;
-    badge.textContent = 'default';
-    tdStatus.appendChild(badge);
-    tr.appendChild(tdStatus);
-
-    tbody.appendChild(tr);
-  });
-}
-
-function updateRowStatus(i) {
-  const wordVal = document.getElementById('ei-word-' + i).value.trim();
-  const defVal  = document.getElementById('ei-def-'  + i).value.trim();
-  const badge   = document.getElementById('ei-status-' + i);
-  if (wordVal || defVal) {
-    badge.className   = 'status-badge custom';
-    badge.textContent = 'custom ✓';
-  } else {
-    badge.className   = 'status-badge default';
-    badge.textContent = 'default';
-  }
-}
-
-// =====================================================
-// 8. GENERATE CUSTOM WHEEL
-// =====================================================
-function generateCustomWheel() {
-  CLUES = DEFAULT_CLUES.map((def, i) => {
-    const wordVal = document.getElementById('ei-word-' + i).value.trim();
-    const defVal  = document.getElementById('ei-def-'  + i).value.trim();
-    return {
-      letter: def.letter,
-      word:   wordVal || def.word,
-      clue:   defVal  || def.clue,
-    };
-  });
-
-  // Rebuild the wheel & reset game
-  buildWheel();
-  gameRestart();
-  showToast('✓ Custom wheel generated! Head to Play Game to start.');
-}
-
-// =====================================================
-// 9. SAVE / LOAD CUSTOM WHEEL (localStorage)
-// =====================================================
-const STORAGE_KEY = 'alphabetWheelCustom_v1';
-
-function saveCustomWheel() {
-  const data = DEFAULT_CLUES.map((_, i) => ({
-    word: document.getElementById('ei-word-' + i).value.trim(),
-    def:  document.getElementById('ei-def-'  + i).value.trim(),
-  }));
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    showToast('💾 Wheel saved! Will reload automatically next visit.');
-  } catch(e) {
-    showToast('⚠ Could not save (storage unavailable)', true);
-  }
-}
-
-function loadCustomWheel() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    let hasCustom = false;
-    data.forEach((row, i) => {
-      if (row.word) {
-        const el = document.getElementById('ei-word-' + i);
-        if (el) el.value = row.word;
-        hasCustom = true;
-      }
-      if (row.def) {
-        const el = document.getElementById('ei-def-' + i);
-        if (el) {
-          el.value = row.def;
-          // Show preview
-          const preview = document.getElementById('ei-preview-' + i);
-          if (preview) {
-            preview.innerHTML = highlightRelativePronouns(row.def);
-            preview.style.display = 'block';
-          }
-        }
-        hasCustom = true;
-      }
-      updateRowStatus(i);
-    });
-    if (hasCustom) {
-      generateCustomWheel();
-      showToast('✓ Saved wheel loaded automatically!');
-    }
-  } catch(e) {
-    // Ignore storage errors silently
-  }
-}
-
-function clearCustomWheel() {
-  DEFAULT_CLUES.forEach((_, i) => {
-    document.getElementById('ei-word-' + i).value = '';
-    document.getElementById('ei-def-'  + i).value = '';
-    const preview = document.getElementById('ei-preview-' + i);
-    if (preview) preview.style.display = 'none';
-    updateRowStatus(i);
-  });
-  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
-  // Reset to defaults
-  CLUES = DEFAULT_CLUES.map(c => ({ ...c }));
-  buildWheel();
-  gameRestart();
-  showToast('↺ Restored to default wheel.');
-}
-
-// =====================================================
-// 10. TAB SWITCHING
-// =====================================================
-function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  document.getElementById('panel-' + name).classList.add('active');
-}
-
-// =====================================================
-// 11. TOAST
-// =====================================================
-let toastTimer = null;
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (isError ? ' error' : '');
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => t.classList.add('show'));
-  });
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
-}
-
-// =====================================================
-// 12. INIT
-// =====================================================
-document.addEventListener('DOMContentLoaded', () => {
-  buildEditorTable();
-  buildWheel();
-  updateDots();
-  loadCustomWheel();   // auto-load saved data if present
-});
-
-// Rebuild wheel dots on resize (responsive)
-let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(buildWheel, 150);
-});
-</script>
 </body>
 </html>
