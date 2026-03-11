@@ -66,11 +66,6 @@
     <div class="game-body">
       <div class="wheel-area">
 
-        <!-- COLOR PICKER -->
-        <div class="color-picker-strip" id="colorStrip" aria-label="Wheel colour palette">
-          <!-- Swatches injected by JS -->
-        </div>
-
         <!-- THE WHEEL -->
         <div class="wheel-ring" id="wheelRing">
           <div class="wheel-center" id="wheelCenter">
@@ -148,6 +143,19 @@
         💡 <strong>How it works:</strong> Fill in any rows you want to customise. Leave a field empty to keep the default.
         Relative pronouns (<strong>who, that, which, where, whose, whom</strong>) are automatically highlighted in your clues.
         Click <strong>Generate My Wheel</strong> to apply — then switch to the Play tab to play!
+      </div>
+
+      <!-- ── WHEEL COLOUR ── -->
+      <div class="palette-picker-block">
+        <div class="palette-picker-label">
+          <span class="palette-label-icon">🎨</span>
+          Wheel colour
+          <span class="palette-label-hint">— choose a colour to identify this wheel in your library</span>
+        </div>
+        <div class="color-picker-strip" id="colorStrip" aria-label="Wheel colour palette">
+          <!-- Swatches injected by JS -->
+        </div>
+        <div class="palette-selected-name" id="paletteSelectedName"></div>
       </div>
 
       <div class="rp-legend">

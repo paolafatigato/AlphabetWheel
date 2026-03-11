@@ -344,20 +344,25 @@ function applyPalette(id) {
   // Wheel center gradient
   const wc = document.getElementById('wheelCenter');
   if (wc) {
-    wc.style.background = p.center;
+    wc.style.background  = p.center;
     wc.style.borderColor = p.border;
   }
 
-  // Solution reveal text color
-  document.documentElement.style.setProperty('--solution-color', p.light);
+  // Solution reveal colour
+  r.style.setProperty('--solution-color', p.light);
   const sr = document.getElementById('solutionReveal');
   if (sr) sr.style.color = p.light;
 
-  // Update active swatch
+  // Update active swatch highlight
   document.querySelectorAll('.color-swatch').forEach(s => {
-    s.classList.toggle('active', s.dataset.palette === id);
+    const on = s.dataset.palette === id;
+    s.classList.toggle('active', on);
     s.style.setProperty('--swatch-glow', s.dataset.glow);
   });
+
+  // Update selected-name label in editor
+  const label = document.getElementById('paletteSelectedName');
+  if (label) label.textContent = '● ' + p.name;
 }
 
 function buildColorStrip() {
@@ -372,9 +377,19 @@ function buildColorStrip() {
     sw.style.background = p.main;
     sw.style.setProperty('--swatch-glow', p.glow);
     sw.setAttribute('aria-label', p.name + ' colour');
-    sw.addEventListener('click', () => applyPalette(p.id));
+    sw.addEventListener('click', () => {
+      applyPalette(p.id);
+      // Rebuild wheel with new colour immediately
+      buildWheel();
+    });
     strip.appendChild(sw);
   });
+  // Set initial label
+  const label = document.getElementById('paletteSelectedName');
+  if (label) {
+    const active = PALETTES.find(x => x.id === activePaletteId);
+    if (active) label.textContent = '● ' + active.name;
+  }
 }
 
 /* =====================================================
@@ -792,6 +807,7 @@ function clearCustomWheel() {
     updateRowStatus(i);
   });
   CLUES = DEFAULT_CLUES.map(c => ({ ...c }));
+  applyPalette('teal');
   buildWheel();
   gameRestart();
   showToast('↺ Restored to default wheel.');
