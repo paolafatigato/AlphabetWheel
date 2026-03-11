@@ -45,7 +45,9 @@ function authLogin() {
 }
 
 function authLogout() {
+  const key = cacheKey(); // capture before currentUser is nulled
   auth.signOut().then(() => {
+    try { localStorage.removeItem(key); } catch(_) {}
     showToast('👋 Signed out successfully.');
   });
 }
@@ -97,8 +99,40 @@ function showLibraryGate(show) {
 }
 
 /* =====================================================
-   FIRESTORE — SAVE WHEEL
+   CACHE-FIRST LIBRARY
+   ─────────────────────────────────────────────────────
+   • localStorage  = instant reads/writes (UI never waits)
+   • Firestore     = async background sync (cross-device)
+
+   Cache format  localStorage key: "wheelLib_<uid>"
+   Value: JSON array of wheel objects:
+     { id, name, data, palette, createdAt, firestoreId? }
    ===================================================== */
+
+function cacheKey() {
+  return 'wheelLib_' + (currentUser?.uid || 'anon');
+}
+
+function readCache() {
+  try {
+    return JSON.parse(localStorage.getItem(cacheKey()) || '[]');
+  } catch { return []; }
+}
+
+function writeCache(wheels) {
+  try {
+    localStorage.setItem(cacheKey(), JSON.stringify(wheels));
+  } catch (e) {
+    console.warn('Cache write failed:', e);
+  }
+}
+
+// Generate a local ID (used until Firestore confirms)
+function localId() {
+  return 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+}
+
+/* ─── COLLECT EDITOR DATA ─── */
 function collectEditorData() {
   return DEFAULT_CLUES.map((_, i) => ({
     word: (document.getElementById('ei-word-' + i) || {}).value?.trim() || '',
@@ -106,8 +140,10 @@ function collectEditorData() {
   }));
 }
 
+/* ─── SAVE ─── */
 async function saveWheelToCloud() {
   if (!currentUser) { showToast('⚠ Please sign in first', true); return; }
+
   const name = document.getElementById('wheelNameInput').value.trim();
   if (!name) {
     document.getElementById('wheelNameInput').focus();
@@ -115,86 +151,144 @@ async function saveWheelToCloud() {
     return;
   }
   const data = collectEditorData();
-  const hasContent = data.some(r => r.word || r.def);
-  if (!hasContent) {
+  if (!data.some(r => r.word || r.def)) {
     showToast('⚠ The wheel has no custom entries yet', true);
     return;
   }
+
+  // 1. Write to localStorage immediately → instant UI feedback
+  const wheel = {
+    id:          localId(),
+    name,
+    data,
+    palette:     activePaletteId,
+    createdAt:   new Date().toISOString(),
+    synced:      false,
+  };
+  const wheels = [wheel, ...readCache()];
+  writeCache(wheels);
+
+  closeSaveModal();
+  showToast('💾 "' + name + '" saved!');
+  if (document.getElementById('panel-library').classList.contains('active')) {
+    renderLibrary();
+  }
+
+  // 2. Push to Firestore in background (no await in the UI path)
+  syncWheelToFirestore(wheel);
+}
+
+async function syncWheelToFirestore(wheel) {
   try {
-    await db.collection('users').doc(currentUser.uid)
-            .collection('wheels').add({
-              name,
-              data,
-              palette: activePaletteId,
-              createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-    showToast('☁ "' + name + '" saved to your library!');
-    closeSaveModal();
-    // Refresh library if tab is open
+    const ref = await db.collection('users').doc(currentUser.uid)
+      .collection('wheels').add({
+        name:      wheel.name,
+        data:      wheel.data,
+        palette:   wheel.palette,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+    // Replace local id with Firestore id in cache
+    const wheels = readCache().map(w =>
+      w.id === wheel.id ? { ...w, id: ref.id, firestoreId: ref.id, synced: true } : w
+    );
+    writeCache(wheels);
+
+    // Silently refresh grid if library tab is open
     if (document.getElementById('panel-library').classList.contains('active')) {
-      loadLibrary();
+      renderLibrary();
     }
   } catch (e) {
-    showToast('⚠ Save failed: ' + e.message, true);
+    console.warn('Background Firestore sync failed:', e);
+    // Mark as unsynced — will retry on next loadLibrary
   }
 }
 
-/* =====================================================
-   FIRESTORE — LOAD LIBRARY
-   ===================================================== */
-async function loadLibrary() {
+/* ─── LOAD LIBRARY ─── */
+function loadLibrary() {
   if (!currentUser) return;
   showLibraryGate(false);
 
-  const grid  = document.getElementById('wheelsGrid');
-  const empty = document.getElementById('libraryEmpty');
-  const count = document.getElementById('libraryCount');
+  // Render from cache instantly
+  renderLibrary();
 
-  grid.innerHTML = '<div class="library-loading">Loading your wheels…</div>';
-  empty.style.display = 'none';
+  // Then sync from Firestore in background
+  syncLibraryFromFirestore();
+}
 
-  try {
-    const snap = await db.collection('users').doc(currentUser.uid)
-                         .collection('wheels')
-                         .orderBy('createdAt', 'desc')
-                         .get();
+function renderLibrary() {
+  const wheels = readCache();
+  const grid   = document.getElementById('wheelsGrid');
+  const empty  = document.getElementById('libraryEmpty');
+  const count  = document.getElementById('libraryCount');
 
-    grid.innerHTML = '';
+  grid.innerHTML = '';
 
-    if (snap.empty) {
-      empty.style.display = 'block';
-      count.textContent = '0 wheels saved';
-    } else {
-      empty.style.display = 'none';
-      count.textContent = snap.size + ' wheel' + (snap.size !== 1 ? 's' : '') + ' saved';
-      snap.forEach(doc => {
-        grid.appendChild(buildWheelCard(doc.id, doc.data()));
-      });
-    }
-  } catch (e) {
-    grid.innerHTML = `<div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:12px;padding:20px">
-      ⚠ Error loading library: ${escapeHtml(e.message)}
-    </div>`;
+  if (!wheels.length) {
+    empty.style.display = 'block';
+    count.textContent   = '0 wheels saved';
+  } else {
+    empty.style.display = 'none';
+    count.textContent   = wheels.length + ' wheel' + (wheels.length !== 1 ? 's' : '') + ' saved';
+    wheels.forEach(w => grid.appendChild(buildWheelCard(w.id, w)));
   }
 }
 
-/* =====================================================
-   FIRESTORE — BUILD WHEEL CARD
-   ===================================================== */
+async function syncLibraryFromFirestore() {
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid)
+      .collection('wheels').orderBy('createdAt', 'desc').get();
+
+    if (snap.empty) return;
+
+    // Build the authoritative list from Firestore
+    const remote = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      remote.push({
+        id:          doc.id,
+        firestoreId: doc.id,
+        name:        d.name,
+        data:        d.data,
+        palette:     d.palette || 'teal',
+        createdAt:   d.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        synced:      true,
+      });
+    });
+
+    // Merge: keep remote as truth, drop local-only unsynced duplicates by name
+    const remoteNames = new Set(remote.map(w => w.name));
+    const localOnly   = readCache().filter(w => !w.synced && !remoteNames.has(w.name));
+    const merged      = [...localOnly, ...remote];
+
+    writeCache(merged);
+
+    // Re-render silently (no loading spinner)
+    if (document.getElementById('panel-library').classList.contains('active')) {
+      renderLibrary();
+    }
+  } catch (e) {
+    console.warn('Firestore sync error:', e);
+    // Cache is still valid — user sees their local data
+  }
+}
+
+/* ─── BUILD WHEEL CARD ─── */
 function buildWheelCard(id, data) {
-  const card = document.createElement('div');
-  card.className = 'wheel-card';
+  const card      = document.createElement('div');
+  card.className  = 'wheel-card';
 
-  const date     = data.createdAt?.toDate?.();
-  const dateStr  = date
-    ? date.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+  const dateStr   = data.createdAt
+    ? new Date(data.createdAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
     : '—';
-  const custom   = data.data ? data.data.filter(r => r.word || r.def).length : 0;
-
-  const palColor = PALETTES.find(p => p.id === (data.palette || 'teal'))?.main || '#4ecdc4';
+  const custom    = data.data ? data.data.filter(r => r.word || r.def).length : 0;
+  const palColor  = PALETTES.find(p => p.id === (data.palette || 'teal'))?.main || '#4ecdc4';
+  const syncBadge = data.synced
+    ? ''
+    : '<span title="Saving to cloud…" style="font-size:10px;opacity:.5;margin-left:6px">⏳</span>';
 
   card.innerHTML = `
-    <div class="wc-name">${escapeHtml(data.name)}</div>
+    <div class="wc-name">${escapeHtml(data.name)}${syncBadge}</div>
     <div class="wc-meta">
       <span style="display:flex;align-items:center;gap:6px">
         <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${palColor};flex-shrink:0"></span>
@@ -203,74 +297,62 @@ function buildWheelCard(id, data) {
       <span>${dateStr}</span>
     </div>
     <div class="wc-actions">
-      <button class="wc-btn wc-load"   onclick="loadWheelFromCloud('${id}')">▶ Load &amp; Play</button>
-      <button class="wc-btn wc-delete" onclick="deleteWheelFromCloud('${id}', this)" title="Delete wheel">🗑</button>
+      <button class="wc-btn wc-load"   onclick="loadWheelById('${id}')">▶ Load &amp; Play</button>
+      <button class="wc-btn wc-delete" onclick="deleteWheelById('${id}', this)" title="Delete wheel">🗑</button>
     </div>
   `;
   return card;
 }
 
-/* =====================================================
-   FIRESTORE — LOAD A WHEEL INTO EDITOR
-   ===================================================== */
-async function loadWheelFromCloud(id) {
-  if (!currentUser) return;
-  try {
-    const doc = await db.collection('users').doc(currentUser.uid)
-                        .collection('wheels').doc(id).get();
-    if (!doc.exists) { showToast('⚠ Wheel not found', true); return; }
+/* ─── LOAD A WHEEL INTO EDITOR ─── */
+function loadWheelById(id) {
+  // Read from cache — instant, no network
+  const wheel = readCache().find(w => w.id === id);
+  if (!wheel) { showToast('⚠ Wheel not found in cache', true); return; }
 
-    const { name, data, palette } = doc.data();
+  if (!document.getElementById('editorTbody').children.length) buildEditorTable();
 
-    // Ensure editor table exists
-    if (!document.getElementById('editorTbody').children.length) {
-      buildEditorTable();
-    }
-
-    data.forEach((row, i) => {
-      const wEl = document.getElementById('ei-word-' + i);
-      const dEl = document.getElementById('ei-def-'  + i);
-      if (wEl) wEl.value = row.word || '';
-      if (dEl) {
-        dEl.value = row.def || '';
-        const preview = document.getElementById('ei-preview-' + i);
-        if (preview) {
-          if (row.def) {
-            preview.innerHTML = highlightRelativePronouns(row.def);
-            preview.style.display = 'block';
-          } else {
-            preview.style.display = 'none';
-          }
-        }
+  wheel.data.forEach((row, i) => {
+    const wEl = document.getElementById('ei-word-' + i);
+    const dEl = document.getElementById('ei-def-'  + i);
+    if (wEl) wEl.value = row.word || '';
+    if (dEl) {
+      dEl.value = row.def || '';
+      const preview = document.getElementById('ei-preview-' + i);
+      if (preview) {
+        if (row.def) { preview.innerHTML = highlightRelativePronouns(row.def); preview.style.display = 'block'; }
+        else           { preview.style.display = 'none'; }
       }
-      updateRowStatus(i);
-    });
+    }
+    updateRowStatus(i);
+  });
 
-    generateCustomWheel();
-    if (palette) applyPalette(palette);
-    showToast('✓ Loaded "' + name + '" — switching to Play!');
-    setTimeout(() => switchTab('game'), 1000);
-
-  } catch (e) {
-    showToast('⚠ Load failed: ' + e.message, true);
-  }
+  generateCustomWheel();
+  if (wheel.palette) applyPalette(wheel.palette);
+  showToast('✓ Loaded "' + wheel.name + '" — switching to Play!');
+  setTimeout(() => switchTab('game'), 800);
 }
 
-/* =====================================================
-   FIRESTORE — DELETE A WHEEL
-   ===================================================== */
-async function deleteWheelFromCloud(id, btn) {
-  if (!currentUser) return;
+/* ─── DELETE A WHEEL ─── */
+async function deleteWheelById(id, btn) {
   if (!confirm('Delete this wheel? This action cannot be undone.')) return;
-  try {
-    btn.disabled = true;
-    await db.collection('users').doc(currentUser.uid)
-            .collection('wheels').doc(id).delete();
-    showToast('🗑 Wheel deleted.');
-    loadLibrary();
-  } catch (e) {
-    showToast('⚠ Delete failed: ' + e.message, true);
-    btn.disabled = false;
+
+  // 1. Remove from cache immediately
+  const wheels    = readCache();
+  const target    = wheels.find(w => w.id === id);
+  const remaining = wheels.filter(w => w.id !== id);
+  writeCache(remaining);
+  renderLibrary();
+  showToast('🗑 Wheel deleted.');
+
+  // 2. Delete from Firestore in background (use firestoreId if available)
+  const fsId = target?.firestoreId || (target?.synced ? id : null);
+  if (fsId && !fsId.startsWith('local_')) {
+    try {
+      await db.collection('users').doc(currentUser.uid).collection('wheels').doc(fsId).delete();
+    } catch (e) {
+      console.warn('Firestore delete failed:', e);
+    }
   }
 }
 
