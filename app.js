@@ -125,6 +125,7 @@ async function saveWheelToCloud() {
             .collection('wheels').add({
               name,
               data,
+              palette: activePaletteId,
               createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
     showToast('☁ "' + name + '" saved to your library!');
@@ -190,10 +191,15 @@ function buildWheelCard(id, data) {
     : '—';
   const custom   = data.data ? data.data.filter(r => r.word || r.def).length : 0;
 
+  const palColor = PALETTES.find(p => p.id === (data.palette || 'teal'))?.main || '#4ecdc4';
+
   card.innerHTML = `
     <div class="wc-name">${escapeHtml(data.name)}</div>
     <div class="wc-meta">
-      <span>${custom} custom entr${custom === 1 ? 'y' : 'ies'}</span>
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${palColor};flex-shrink:0"></span>
+        ${custom} custom entr${custom === 1 ? 'y' : 'ies'}
+      </span>
       <span>${dateStr}</span>
     </div>
     <div class="wc-actions">
@@ -214,7 +220,7 @@ async function loadWheelFromCloud(id) {
                         .collection('wheels').doc(id).get();
     if (!doc.exists) { showToast('⚠ Wheel not found', true); return; }
 
-    const { name, data } = doc.data();
+    const { name, data, palette } = doc.data();
 
     // Ensure editor table exists
     if (!document.getElementById('editorTbody').children.length) {
@@ -241,6 +247,7 @@ async function loadWheelFromCloud(id) {
     });
 
     generateCustomWheel();
+    if (palette) applyPalette(palette);
     showToast('✓ Loaded "' + name + '" — switching to Play!');
     setTimeout(() => switchTab('game'), 1000);
 
@@ -303,6 +310,138 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/* =====================================================
+   COLOR PALETTES
+   Each palette: { id, name, main, dim, glow, light, center }
+   ===================================================== */
+const PALETTES = [
+  { id:'teal',     name:'Teal',      main:'#4ecdc4', dim:'#2a8a85', glow:'rgba(78,205,196,0.18)',   light:'#7dffc0', center:'radial-gradient(circle at 40% 35%, #152d3a, #08141e)', border:'#1a4050' },
+  { id:'violet',   name:'Violet',    main:'#9b6dff', dim:'#5a3db0', glow:'rgba(155,109,255,0.18)',  light:'#c9b0ff', center:'radial-gradient(circle at 40% 35%, #1c1535, #080e1e)', border:'#2a1a50' },
+  { id:'gold',     name:'Amber',     main:'#f0b84e', dim:'#a07820', glow:'rgba(240,184,78,0.18)',   light:'#ffe09a', center:'radial-gradient(circle at 40% 35%, #2a1e08, #0e0a02)', border:'#40300a' },
+  { id:'coral',    name:'Coral',     main:'#ff6b6b', dim:'#b03030', glow:'rgba(255,107,107,0.18)',  light:'#ffb0b0', center:'radial-gradient(circle at 40% 35%, #301010, #0f0505)', border:'#501020' },
+  { id:'sky',      name:'Sky',       main:'#5bc4f5', dim:'#2a80b0', glow:'rgba(91,196,245,0.18)',   light:'#aae4ff', center:'radial-gradient(circle at 40% 35%, #0e2535, #040f1a)', border:'#153550' },
+  { id:'emerald',  name:'Emerald',   main:'#2ecc7a', dim:'#1a7a45', glow:'rgba(46,204,122,0.18)',   light:'#85ffbe', center:'radial-gradient(circle at 40% 35%, #0c2518, #040e08)', border:'#0e3520' },
+  { id:'rose',     name:'Rose',      main:'#ff7eb3', dim:'#b03070', glow:'rgba(255,126,179,0.18)',  light:'#ffc0e0', center:'radial-gradient(circle at 40% 35%, #301020, #100510)', border:'#501030' },
+  { id:'orange',   name:'Orange',    main:'#ff8c42', dim:'#b05010', glow:'rgba(255,140,66,0.18)',   light:'#ffc090', center:'radial-gradient(circle at 40% 35%, #2a1408, #0e0702)', border:'#401808' },
+  { id:'lavender', name:'Lavender',  main:'#b8a4e8', dim:'#705ab0', glow:'rgba(184,164,232,0.18)', light:'#ddd0ff', center:'radial-gradient(circle at 40% 35%, #1a1530, #080510)', border:'#302055' },
+  { id:'lime',     name:'Lime',      main:'#aadd55', dim:'#607a20', glow:'rgba(170,221,85,0.18)',   light:'#d4ff90', center:'radial-gradient(circle at 40% 35%, #182208, #070e02)', border:'#253510' },
+];
+
+let activePaletteId = 'teal';
+
+function applyPalette(id) {
+  const p = PALETTES.find(x => x.id === id) || PALETTES[0];
+  activePaletteId = p.id;
+  const r = document.documentElement;
+  r.style.setProperty('--teal',      p.main);
+  r.style.setProperty('--teal-dim',  p.dim);
+  r.style.setProperty('--teal-glow', p.glow);
+  r.style.setProperty('--rp-color',  p.main);
+  r.style.setProperty('--rp-bg',     p.glow.replace('0.18', '0.15'));
+
+  // Wheel center gradient
+  const wc = document.getElementById('wheelCenter');
+  if (wc) {
+    wc.style.background = p.center;
+    wc.style.borderColor = p.border;
+  }
+
+  // Solution reveal text color
+  document.documentElement.style.setProperty('--solution-color', p.light);
+  const sr = document.getElementById('solutionReveal');
+  if (sr) sr.style.color = p.light;
+
+  // Update active swatch
+  document.querySelectorAll('.color-swatch').forEach(s => {
+    s.classList.toggle('active', s.dataset.palette === id);
+    s.style.setProperty('--swatch-glow', s.dataset.glow);
+  });
+}
+
+function buildColorStrip() {
+  const strip = document.getElementById('colorStrip');
+  strip.innerHTML = '';
+  PALETTES.forEach(p => {
+    const sw = document.createElement('button');
+    sw.className       = 'color-swatch' + (p.id === activePaletteId ? ' active' : '');
+    sw.title           = p.name;
+    sw.dataset.palette = p.id;
+    sw.dataset.glow    = p.glow;
+    sw.style.background = p.main;
+    sw.style.setProperty('--swatch-glow', p.glow);
+    sw.setAttribute('aria-label', p.name + ' colour');
+    sw.addEventListener('click', () => applyPalette(p.id));
+    strip.appendChild(sw);
+  });
+}
+
+/* =====================================================
+   TEXT IMPORT
+   ===================================================== */
+function importFromText() {
+  const raw = document.getElementById('importTextarea').value;
+  if (!raw.trim()) { showToast('⚠ Paste some text first', true); return; }
+
+  // Split into tokens by newline, comma, semicolon
+  const tokens = raw
+    .split(/[\n,;]+/)
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
+
+  if (!tokens.length) { showToast('⚠ No entries found', true); return; }
+
+  // Parse each token: word[:=]definition  OR  just word
+  const parsed = tokens.map(t => {
+    const sep = t.search(/[:=]/);
+    if (sep > 0) {
+      return {
+        word: t.slice(0, sep).trim(),
+        def:  t.slice(sep + 1).trim(),
+      };
+    }
+    return { word: t.trim(), def: '' };
+  }).filter(e => e.word);
+
+  if (!parsed.length) { showToast('⚠ Could not parse any entries', true); return; }
+
+  // Make sure editor table is built
+  if (!document.getElementById('editorTbody').children.length) buildEditorTable();
+
+  let filled = 0;
+  const limit = Math.min(parsed.length, DEFAULT_CLUES.length);
+
+  for (let i = 0; i < limit; i++) {
+    const wEl = document.getElementById('ei-word-' + i);
+    const dEl = document.getElementById('ei-def-'  + i);
+    if (!wEl) continue;
+    if (parsed[i].word) { wEl.value = parsed[i].word; }
+    if (parsed[i].def)  {
+      dEl.value = parsed[i].def;
+      const preview = document.getElementById('ei-preview-' + i);
+      if (preview) {
+        preview.innerHTML = highlightRelativePronouns(parsed[i].def);
+        preview.style.display = 'block';
+      }
+    }
+    updateRowStatus(i);
+    filled++;
+  }
+
+  // Preview feedback
+  const previewEl = document.getElementById('importPreview');
+  const lines = parsed.slice(0, limit).map((e, i) =>
+    `${DEFAULT_CLUES[i].letter}  →  ${e.word}${e.def ? '  :  ' + e.def.substring(0, 50) + (e.def.length > 50 ? '…' : '') : ''}`
+  );
+  previewEl.innerHTML = `<strong style="color:#7dffc0">✓ ${filled} entr${filled===1?'y':'ies'} imported:</strong>\n` + lines.join('\n');
+  previewEl.style.display = 'block';
+  previewEl.style.whiteSpace = 'pre';
+
+  // Close the details
+  document.getElementById('importPanel').open = false;
+
+  showToast(`✓ ${filled} entr${filled===1?'y':'ies'} imported into the table!`);
 }
 
 /* =====================================================
@@ -390,6 +529,7 @@ function buildWheel() {
     });
     ring.appendChild(dot);
   });
+  applyPalette(activePaletteId); // recolour center after DOM rebuild
 }
 
 function updateDots() {
@@ -685,9 +825,11 @@ function showToast(msg, isError = false) {
    12. INIT
    ===================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+  buildColorStrip();
+  applyPalette('teal');
   buildWheel();
   updateDots();
-  updateEditorGate(); // sets correct initial state before Firebase responds
+  updateEditorGate();
 });
 
 // Rebuild dots on resize

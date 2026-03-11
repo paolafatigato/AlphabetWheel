@@ -66,6 +66,11 @@
     <div class="game-body">
       <div class="wheel-area">
 
+        <!-- COLOR PICKER -->
+        <div class="color-picker-strip" id="colorStrip" aria-label="Wheel colour palette">
+          <!-- Swatches injected by JS -->
+        </div>
+
         <!-- THE WHEEL -->
         <div class="wheel-ring" id="wheelRing">
           <div class="wheel-center" id="wheelCenter">
@@ -154,6 +159,39 @@
         <span class="rp-pill">whose</span>
         <span class="rp-pill">whom</span>
       </div>
+
+      <!-- ── TEXT IMPORT ── -->
+      <details class="import-panel" id="importPanel">
+        <summary class="import-summary">
+          <span class="import-summary-icon">📋</span>
+          <span>Quick Import from text</span>
+          <span class="import-chevron">▾</span>
+        </summary>
+        <div class="import-body">
+          <p class="import-hint">
+            Paste a list of <strong>word : clue</strong> pairs (or just words).<br>
+            Separators between entries: <code>newline</code> · <code>,</code> · <code>;</code><br>
+            Separator between word and clue: <code>:</code> or <code>=</code><br>
+            Entries are matched to letters <strong>A → Z</strong> in order. Extra entries are ignored.
+          </p>
+          <textarea
+            id="importTextarea"
+            class="import-textarea"
+            placeholder="Examples:
+Apple : A round fruit that grows on trees
+Balloon = An object that you fill with air or helium
+Cat
+Dog : An animal that is known as man's best friend
+..."
+            rows="7"
+          ></textarea>
+          <div class="import-actions">
+            <button class="ea-btn ea-import" onclick="importFromText()">⬇ Fill Table from Text</button>
+            <button class="ea-btn ea-clear" onclick="document.getElementById('importTextarea').value=''">✕ Clear</button>
+          </div>
+          <div class="import-preview" id="importPreview" style="display:none"></div>
+        </div>
+      </details>
 
       <div class="editor-table-wrap">
         <table class="editor-table" id="editorTable">
